@@ -31,8 +31,6 @@ if ($WIDTH -eq 0 -or $HEIGHT -eq 0){
     $HEIGHT = [System.Windows.Forms.SystemInformation]::PrimaryMonitorSize.Height
 }
 
-write-host "$WIDTH,$HEIGHT,$URL"
-
 # Capture Image
 Start-Process -FilePath "msedge.exe" -ArgumentList "--headless", "--window-size=$WIDTH,$HEIGHT", "--virtual-time-budget=1000", "--screenshot=$WORKDIR\wsbg.png", "`"$URL`"" -Wait
 
