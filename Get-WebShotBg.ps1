@@ -18,7 +18,8 @@ Param(
     [int]$HEIGHT = 0
 )
 
-$WORKDIR="$env:temp\WSBG\"
+$WORKDIR="$env:temp\WSBG"
+$BGFILE="$WORKDIR\wsbg.png"
 
 # Make workdir
 New-Item -Path $WORKDIR -ItemType Directory -Force
@@ -32,8 +33,26 @@ if ($WIDTH -eq 0 -or $HEIGHT -eq 0){
 }
 
 # Capture Image
-Start-Process -FilePath "msedge.exe" -ArgumentList "--headless", "--window-size=$WIDTH,$HEIGHT", "--virtual-time-budget=1000", "--screenshot=$WORKDIR\wsbg.png", "`"$URL`"" -Wait
+Write-Host "Fetching screenshot from ${URL}"
+Start-Process -FilePath "msedge.exe" -ArgumentList "--headless", "--window-size=$WIDTH,$HEIGHT", "--virtual-time-budget=5000", "--timeout=5000", "--screenshot=$BGFILE", "`"$URL`"" -Wait
 
 # Set Background
-Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name WallPaper -Value "$WORKDIR\wsbg.png"
-Start-Process -FilePath "rundll32.exe" -ArgumentList "user32.dll, UpdatePerUserSystemParameters"
+# Reference: https://c-nergy.be/blog/?p=15291
+$CODE = @' 
+using System.Runtime.InteropServices; 
+namespace Win32{ 
+    
+     public class Wallpaper{ 
+        [DllImport("user32.dll", CharSet=CharSet.Auto)] 
+         static extern int SystemParametersInfo (int uAction , int uParam , string lpvParam , int fuWinIni) ; 
+         
+         public static void SetWallpaper(string thePath){ 
+            SystemParametersInfo(20,0,thePath,3); 
+         }
+    }
+ } 
+'@
+
+add-type $CODE 
+
+[Win32.Wallpaper]::SetWallpaper($BGFILE)
